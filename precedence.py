@@ -8,13 +8,12 @@ op -> + | *
 E -> E + E 
    | E * E
    | id
+   | if E then E else E
 """
 class eof(metaclass=Symbol): pass
 class ident(metaclass=Symbol): pass
 class add(metaclass=Symbol): pass
 class mul(metaclass=Symbol): pass
-class sub(metaclass=Symbol): pass
-class div(metaclass=Symbol): pass
 table = {
     ident: 999,
     eof: 0,
@@ -60,14 +59,13 @@ class Parsing(object):
         self.stack = Stack ()
         self.stack.push(eof)
         self.values = Stack()
-        inp = lex.lex(inp)
+        inp = self.lex.lex(inp)
         alpha,cur_val = self.next(inp)
         beta = self.stack.peek
         while True:
             comp_flag = compare(alpha,beta())
             if alpha == eof and beta() == eof:
-                print( self.values )
-                return self.values
+                return self.values.pop()
             elif comp_flag == GE or comp_flag == EQ:
                 self.stack.push( alpha )
                 self.values.push( cur_val )
@@ -76,11 +74,11 @@ class Parsing(object):
                 while True:
                     current = self.stack.pop()
                     flag = compare(current,beta())
-                    if flag == GE:
-                        val = func[current]#.__code__.co_argcount
+                    if flag == GE or flag == EQ:
+                        val = func[current]
                         count = val.__code__.co_argcount 
                         args = list(reversed([self.values.pop() for _ in range(count)]))
-                        # print( "=>", current, self.values )
+                        print( "=>", current,args, self.values )
                         self.values.push ( val(*args) )
                         break
             else:
@@ -100,8 +98,9 @@ def translate(s: str) -> str:
     return (ident,s)
 parse = Parsing(lex,translate).parse
 
-print( parse("a * b + c") )
+print( parse("a + b * c + d * e * f") )
 """
 单纯的 Operator Precedence Parsing 无法解决一部分问题
-  
+  对 lr0 部分 Shift Reduce 冲突部分进行标记
+  根据 Precedence 进行解决冲突
 """

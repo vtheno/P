@@ -52,16 +52,5 @@ class Symbol(type):
         attrs["__repr__"] = lambda self: f"{self.__name__}"
         return type.__new__(cls,name,bases,attrs)()
 
-class ASTStack(object):
-    def __init__(self):
-        self.ctx = [ ]
-    def push(self,val):
-        self.ctx.append( val )
-    def pop(self,n=1):
-        out = list(reversed([self.ctx.pop() for _ in range(n)]))
-        return out
-    def __repr__(self):
-        return f"{self.ctx}"
-
-__all__ = ["call","define","Symbol","Stack","ASTStack"]
+__all__ = ["call","define","Symbol","Stack"]
 
