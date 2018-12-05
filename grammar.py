@@ -1,10 +1,11 @@
 #coding=utf-8
 from util import Symbol
-class bottom(metaclass=Symbol): pass
-class eof(metaclass=Symbol): pass
-class Start(metaclass=Symbol): pass
-
 from collections import namedtuple
+
+class Start(metaclass=Symbol): pass
+class id(metaclass=Symbol): pass
+class eof(metaclass=Symbol): pass
+# class bottom(metaclass=Symbol): pass
 
 item = namedtuple('item',['name','left','rest','lookahead'])
 item.__repr__ = lambda self:f"{self.name} = {' '.join([repr(i) for i in self.left])} @ {' '.join([repr(i) for i in self.rest])} ;; {self.lookahead}"
@@ -26,9 +27,9 @@ class grammar(object):
         self.compute_nullable()
         self.compute_first()
     def init_set(self):
-        self.nullable_set[bottom] = True
+        # self.nullable_set[bottom] = True
         self.nullable_set[eof] = True
-        self.first_set[bottom] = [bottom]
+        # self.first_set[bottom] = [bottom]
         self.first_set[eof] = [eof]
         for x in self.V:
             self.nullable_set[x] = False
