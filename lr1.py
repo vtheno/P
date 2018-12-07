@@ -126,7 +126,13 @@ class LR1(object):
                         lookahead = it.lookahead
                         if before:
                             if before[0] == 'shift': # shift-reduce conflict
-                                X = [x for x in it.left if x in self.Vt][-1]
+                                X = [x for x in it.left if x in self.Vt]
+                                # print( ">>>", X )
+                                if X == []: # grammar not have Vt
+                                    self.action_table[i][it.lookahead] = reduce
+                                    continue
+                                else:
+                                    X = X[-1]
                                 cmp_flag = self.compare(lookahead, X) 
                                 # print( i, "|",it,"|", X,cmp_flag,lookahead,before,reduce )
                                 if cmp_flag == EQ:
@@ -253,6 +259,7 @@ rules = [
     (E,[E,div,E]),
     (E,[IF,E,THEN,E,ELSE,E]),
     (E,[LET,id,ASSGIN,E,IN,E]),
+    (E,[E,E]),
     (E,[id]),
 ]
 vt = [id,add,mul] + [sub,div] + [IF,THEN,ELSE] + [LET,ASSGIN,IN]
@@ -265,6 +272,7 @@ func_maps = [
     lambda e1,_,e2: {"/":[e1,e2]},
     lambda _i,e1,_t,e2,_e,e3: {"if":[e1,e2,e3]},
     lambda _l,v,_a,e1,_i,e2:{"let":[(v,e1),e2]},
+    lambda e1,e2: {"app":[e1,e2]},
     lambda it: {"id":[it]},
 ]
 R = grammar(rules,vt,vn)
@@ -334,7 +342,7 @@ pprint( lr.parse("""
 if let a = 2 
    in a * 1 + 3 / 2 
 then a + b * b - c * c / 2
-else a * b / b * a
+else f arg
 """) )
 print( clock() - t1 )
 """
