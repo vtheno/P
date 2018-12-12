@@ -2,8 +2,9 @@
 from util import Symbol
 from collections import namedtuple
 
-class Start(metaclass=Symbol): pass
-class id(metaclass=Symbol): pass
+class start(metaclass=Symbol): pass
+class ident(metaclass=Symbol): pass
+class number(metaclass=Symbol): pass
 class eof(metaclass=Symbol): pass
 # class bottom(metaclass=Symbol): pass
 
@@ -11,6 +12,8 @@ item = namedtuple('item',['name','left','rest','lookahead'])
 item.__repr__ = lambda self:f"{self.name} = {' '.join([repr(i) for i in self.left])} @ {' '.join([repr(i) for i in self.rest])} ;; {self.lookahead}"
 
 class grammar(object):
+    __slots__ = ["R","S","Vt","Vn","V",
+                 "first_set","follow_set","nullable_set", ]
     def __init__(self,
                  g: [(Symbol,[Symbol])],
                  vt: [Symbol],

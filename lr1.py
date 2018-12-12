@@ -24,6 +24,9 @@ class Left(metaclass=Associative): pass
 class Right(metaclass=Associative): pass
 
 class LR1(object):
+    __slots__ = ["lex","translate","R","Vt","Vn","V","Start","precedence","assocs","func_maps",
+                 "C","action_table","goto_table",
+                 "stack","values"]
     def __init__(self, 
                  lex: Lexical, 
                  translate: "str -> (Symbol * str)",
@@ -38,10 +41,17 @@ class LR1(object):
         self.Vt = self.R.Vt
         self.Vn = self.R.Vn
         self.V = self.R.V
-        self.Start = self.R.R[0][0]
+        self.Start = self.R.S
         self.precedence = precedence
         self.assocs = assocs
         self.func_maps = func_maps
+        self.C = []
+        self.action_table = []
+        self.goto_table = []
+        self.stack = []
+        self.values = []
+        self.items()
+        self.table()
     def closure(self, I:[item]) -> [item]:
         I = list(I)
         changed = True
@@ -61,14 +71,13 @@ class LR1(object):
                                 I += [value]
                                 changed = True
         return I
-    def goto(self,I:[item],X:"Vn"):
+    def goto(self,I:[item],X:"V"):
         return self.closure(
             item(it.name,it.left + [it.rest[0]],it.rest[1:], it.lookahead) for it in I if it.rest and it.rest[0] == X
         )
     def items(self):
         I0 = self.closure( [item(self.R.R[0][0],[],self.R.R[0][1],eof)] )
         self.C = [I0]
-        # self.targets = [{}]
         changed = True
         while changed:
             changed = False
@@ -77,27 +86,22 @@ class LR1(object):
                     In = self.goto(I,X)
                     if In and In not in self.C:
                         self.C.append( In )
-                        # self.targets +=  [{}] 
-                        # self.targets[i][X] = self.C.index(In)
                         changed = True
-                    #if In in self.C:
-                    #    self.targets[i][X] = self.C.index(In)
     def compare(self,alpha,beta):
-            a = self.precedence.get(alpha,None)
-            b = self.precedence.get(beta,None)
-            if a == None or b == None:
-                return None
-            # print( "compare =>", alpha,a,beta,b )
-            _id = self.precedence[id]
-            assert not (a == b == _id)
-            if a > b:
-                return GE
-            elif a < b:
-                return LE
-            elif a == b:
-                return EQ
-            else:
-                raise CompareError
+        a = self.precedence.get(alpha,None)
+        b = self.precedence.get(beta,None)
+        if a == None or b == None:
+            return None
+        _id = self.precedence[ident]
+        assert not (a == b == _id)
+        if a > b:
+            return GE
+        elif a < b:
+            return LE
+        elif a == b:
+            return EQ
+        else:
+            raise CompareError
     def table(self):
         length_I = len(self.C)
         self.action_table = [{} for _ in range(length_I)]
@@ -112,7 +116,8 @@ class LR1(object):
                         Cj = self.goto(Ci,X)
                         if Cj:
                             j = self.C.index(Cj)
-                            shift = ('shift',j)
+                            shift = ('shift',j) 
+                            # shift-shift or reduce-shift or accept-shift
                             self.action_table[i][X] = shift
             for it in Ci:
                 if it.rest == []:
@@ -134,7 +139,7 @@ class LR1(object):
                                 else:
                                     X = X[-1]
                                 cmp_flag = self.compare(lookahead, X) 
-                                # print( i, "|",it,"|", X,cmp_flag,lookahead,before,reduce )
+                                # print( i, "|",it,"|", lookahead,cmp_flag,X,before,reduce )
                                 if cmp_flag == EQ:
                                     # default associative is Left
                                     X_assoc = self.assocs.get(X,Left)
@@ -147,7 +152,7 @@ class LR1(object):
                                         else:
                                             # lookahead_assoc == Right
                                             self.action_table[i][lookahead] = before
-                                    else:
+                                    else: # X not is lookahead 
                                         if lookahead_assoc == Left:
                                             self.action_table[i][lookahead] = reduce
                                         else:
@@ -158,6 +163,7 @@ class LR1(object):
                                 elif cmp_flag == LE:
                                     self.action_table[i][lookahead] = reduce
                                 else:# default lookahead cmp_flag X is GE
+                                    # 无优先级声明则默认为高优先级
                                     self.action_table[i][lookahead] = before
                             else:
                                 raise ConflictError(f" => NoSupport resloving Reduce-Reduce !!")
@@ -182,7 +188,7 @@ class LR1(object):
         current,token = self.next(g)
         self.values.push( token )
         state = self.stack.peek
-        while True:
+        while 1:
             #print( current, token, self.stack )
             #print( "stack:",self.stack )
             #print( "value:",self.values )
@@ -221,131 +227,9 @@ class LR1(object):
                 return func(*args)
             else:
                 raise ParseError("I don't know what's happen, i'm sorry...")
-class E(metaclass=Symbol): pass
-class add(metaclass=Symbol): pass
-class mul(metaclass=Symbol): pass
-class sub(metaclass=Symbol): pass
-class div(metaclass=Symbol): pass
 
-class IF(metaclass=Symbol): pass
-class THEN(metaclass=Symbol): pass
-class ELSE(metaclass=Symbol): pass
-class LET(metaclass=Symbol): pass
-class ASSGIN(metaclass=Symbol): pass
-class IN(metaclass=Symbol): pass
 
-table = {
-    id: 999,
-    eof: 0,
-    add: 4,
-    sub: 4,
-    mul: 5,
-    div: 5,
-#    IF: 1,
-#    THEN: 1,
-#    ELSE: 1,
-}
-assocs = {
-    add: Left,
-    sub: Left,
-    mul: Left,
-    div: Left,
-}
-rules = [
-    (Start,[E]),
-    (E,[E,add,E]),
-    (E,[E,mul,E]),
-    (E,[E,sub,E]),
-    (E,[E,div,E]),
-    (E,[IF,E,THEN,E,ELSE,E]),
-    (E,[LET,id,ASSGIN,E,IN,E]),
-    (E,[E,E]),
-    (E,[id]),
-]
-vt = [id,add,mul] + [sub,div] + [IF,THEN,ELSE] + [LET,ASSGIN,IN]
-vn = [Start,E]
-func_maps = [
-    lambda e: e,
-    lambda e1,_,e2: {"+":[e1,e2]},
-    lambda e1,_,e2: {"*":[e1,e2]},
-    lambda e1,_,e2: {"-":[e1,e2]},
-    lambda e1,_,e2: {"/":[e1,e2]},
-    lambda _i,e1,_t,e2,_e,e3: {"if":[e1,e2,e3]},
-    lambda _l,v,_a,e1,_i,e2:{"let":[(v,e1),e2]},
-    lambda e1,e2: {"app":[e1,e2]},
-    lambda it: {"id":[it]},
-]
-R = grammar(rules,vt,vn)
-print( R.first_set )
-lex = Lexical([" ","\n"],{})
-def translate(s):
-    if s == '+':
-        return (add,s)
-    elif s == '*':
-        return (mul,s)
-    elif s == '-':
-        return (sub,s)
-    elif s == '/':
-        return (div,s)
-    elif s == 'if':
-        return (IF,s)
-    elif s == "then":
-        return (THEN,s)
-    elif s == 'else':
-        return (ELSE,s)
-    elif s == 'let':
-        return (LET,s)
-    elif s == '=':
-        return (ASSGIN,s)
-    elif s == 'in':
-        return (IN,s)
-    return (id,s)
-lr = LR1(lex,translate,R,table,assocs, func_maps)
-from time import clock
-from pprint import pprint
-t1 = clock()
-lr.items()
-print( clock() - t1 )
-# pprint( lr.C )
-print( "----------------------------------------" )
-# pprint( lr.targets )
-print( "----------------------------------------" )
-t1 = clock()
-lr.table()
-print( clock() - t1 )
-print( "----------------------------------------" )
-def format(table):
-    def get_rows(row):
-        reject = ' ' * len("('reject',1)")
-        ID = row.get(id,reject)
-        ADD = row.get(add,reject)
-        SUB = row.get(sub,reject)
-        MUL = row.get(mul,reject)
-        DIV = row.get(div,reject)
-        EOF = row.get(eof,reject)
-        return ID,ADD,SUB,MUL,DIV,EOF
-    def row_format(ID,ADD,SUB,MUL,DIV,EOF):
-        return f"{ID}\t{ADD}\t{SUB}\t{MUL}\t{DIV}\t{EOF}"
-    print( "  ","id\t\tadd\t\tsub\t\tmul\t\tdiv\t\teof" )
-    for i,row in enumerate(table):
-        print( f"{i}",row_format(*get_rows(row)) )
-# format( lr.action_table )
-print( "----------------------------------------" )
-# pprint( lr.goto_table )
-print( "----------------------------------------" )
-#pprint( lr.parse("""
-#a + b * b - c * c / 2
-#""") )
-print( 'time clock' )
-t1 = clock()
-pprint( lr.parse("""
-if let a = 2 
-   in a * 1 + 3 / 2 
-then a + b * b - c * c / 2
-else f arg
-""") )
-print( clock() - t1 )
-"""
-# todo 
-# 1. how reslove shift-reduce(SR) or reduce-reduce(RR) conflicts problem
-"""
+__all__ = ["Left","Right",
+           "ident","number","start","eof",
+           "Symbol",
+           "LR1","Lexical","grammar"]
