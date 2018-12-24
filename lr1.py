@@ -47,6 +47,9 @@ class LR1(object):
         self.goto_table = []
         self.stack = []
         self.values = []
+        self.cache_keys = []
+        self.cache_values = []
+        self.cache_length = 0
         self.items()
         self.table()
     def closure(self, I:[item]) -> [item]:
@@ -65,13 +68,23 @@ class LR1(object):
                         if X == name:
                             value = item(name,[],body,b)
                             if value not in I:
-                                I += [value]
+                                I.append( value )
                                 changed = True
         return I
     def goto(self,I:[item],X:"V"):
-        return self.closure(
-            item(it.name,it.left + [it.rest[0]],it.rest[1:], it.lookahead) for it in I if it.rest and it.rest[0] == X
-        )
+        # old version 
+        # return self.closure( item(it.name,it.left + [it.rest[0]],it.rest[1:], it.lookahead) for it in I if it.rest and it.rest[0] == X )
+        key = [item(it.name,it.left + [it.rest[0]],it.rest[1:], it.lookahead) for it in I if it.rest and it.rest[0] == X]
+        for idx in range(self.cache_length):
+            i,x = self.cache_keys[idx]
+            if i == I and x == X:
+                return self.cache_values[idx]
+        else:
+            self.cache_keys.append((I,X))
+            self.cache_length += 1
+            value = self.closure( key )
+            self.cache_values.append( value )
+            return value
     def items(self):
         I0 = self.closure( [item(self.R.R[0][0],[],self.R.R[0][1],EOF)] )
         self.C = [I0]
@@ -189,7 +202,10 @@ class LR1(object):
             # print( current, token, self.stack )
             # print( "stack:",self.stack )
             # print( "value:",self.values )
-            act,In_of_n = self.action_table[state()][current]
+            try:
+                act,In_of_n = self.action_table[state()][current]
+            except KeyError:
+                raise ParseError(f"Ran into a ``{token}`` where it wasn't expected")
             #print( "=>", act,In_of_n )
             if not (token is None) and act == 'shift':
                 self.values.push(token)
@@ -223,10 +239,9 @@ class LR1(object):
                 args = self.values.pop()
                 return func(*args)
             else:
-                raise ParseError("I don't know what's happen, i'm sorry...")
-
+                raise ParseError(f"Ran into a ``{token}`` where it wasn't expected")
 
 __all__ = ["Left","Right","Associative",
            "ident","number","START","EOF",
-           "Symbol","mkSym",
+           "Symbol","mkSym","ParseError",
            "LR1","Lexical","grammar"]

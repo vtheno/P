@@ -37,7 +37,7 @@ rules = [
     (E,[E,sub,E]),
     (E,[E,div,E]),
     (E,[IF,E,THEN,E,ELSE,E]),
-    (E,[LET,IDENT,ASSGIN,E,IN,E]),
+    (E,[LET,ident,ASSGIN,E,IN,E]),
     (E,[E,E]),
     (E,[ident]),
     (E,[number]),

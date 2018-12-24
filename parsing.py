@@ -76,7 +76,7 @@ class Parser(object):
         if ret and 0 < level < 9999 :
             self.table[ret] = level
         else:
-            raise NotImplementedError
+            raise ParseError(f"{name!r} is not used") if ret is None else ParseError(f"0 < {level!r} < 9999")
     def setAssoc(self,name: str,assoc: Associative):
         V = dict([(i.__name__,i) for i in self.Vn + self.Vt if i not in [ident,number]])
         ret = V.get(name,None)
@@ -84,8 +84,9 @@ class Parser(object):
         if ret and isinstance(type(assoc),Associative):
             self.assocs[ret] = assoc
         else:
-            raise NotImplementedError
+            raise ParseError(f"{name!r} is not used") if ret is None else ParseError(f"{assoc!r} choice [Left | Right]")
     def build(self,lex: Lexical):
         return LR1(lex, self.translate, grammar(self.rules,self.Vt,self.Vn), self.table, self.assocs, self.func_maps)
 
 __all__ = ["Parser","Left","Right","Lexical"]
+# todo add a dump action_table and goto_table to file and load it from file
