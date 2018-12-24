@@ -18,7 +18,7 @@ class IN(metaclass=Symbol): pass
 table = {
     ident: 999,
     number: 999,
-    eof: 0,
+    EOF: 0,
     add: 4,
     sub: 4,
     mul: 5,
@@ -31,19 +31,19 @@ assocs = {
     div: Left,
 }
 rules = [
-    (start,[E]),
+    (START,[E]),
     (E,[E,add,E]),
     (E,[E,mul,E]),
     (E,[E,sub,E]),
     (E,[E,div,E]),
     (E,[IF,E,THEN,E,ELSE,E]),
-    (E,[LET,ident,ASSGIN,E,IN,E]),
+    (E,[LET,IDENT,ASSGIN,E,IN,E]),
     (E,[E,E]),
     (E,[ident]),
     (E,[number]),
 ]
 """
-Start -> Expr
+START -> Expr
 Expr -> Expr + Expr
 Expr -> Expr * Expr
 Expr -> Expr - Expr
@@ -55,7 +55,7 @@ Expr -> ident
 Expr -> number
 """
 vt = [ident,number] + [add,mul] + [sub,div] + [IF,THEN,ELSE] + [LET,ASSGIN,IN]
-vn = [start,E]
+vn = [START,E]
 func_maps = [
     lambda e: e,
     lambda e1,_,e2: {"+":[e1,e2]},

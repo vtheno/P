@@ -51,6 +51,8 @@ class Symbol(type):
         attrs["__name__"] = name
         attrs["__repr__"] = lambda self: f"{self.__name__}"
         return type.__new__(cls,name,bases,attrs)()
+def mkSym(name):
+    return Symbol.__new__(Symbol,name,(),{})
 class ASTStack(object):
     def __init__(self):
         self.ctx = [ ]
@@ -61,5 +63,5 @@ class ASTStack(object):
         return out
     def __repr__(self):
         return f"{self.ctx}"
-__all__ = ["call","define","Symbol","Stack","ASTStack"]
+__all__ = ["call","define","Symbol","mkSym","Stack","ASTStack"]
 

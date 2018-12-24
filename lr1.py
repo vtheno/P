@@ -24,9 +24,6 @@ class Left(metaclass=Associative): pass
 class Right(metaclass=Associative): pass
 
 class LR1(object):
-    __slots__ = ["lex","translate","R","Vt","Vn","V","Start","precedence","assocs","func_maps",
-                 "C","action_table","goto_table",
-                 "stack","values"]
     def __init__(self, 
                  lex: Lexical, 
                  translate: "str -> (Symbol * str)",
@@ -60,8 +57,8 @@ class LR1(object):
             for it in I:
                 X = it.rest[0] if it.rest else []
                 tail = it.rest[1:]
-                tail = tail if tail else [eof]
-                for b in self.R.first_point(tail + [it.lookahead,eof]):
+                tail = tail if tail else [EOF]
+                for b in self.R.first_point(tail + [it.lookahead,EOF]):
                 #for b in self.R.first_point(tail + [it.lookahead]):
                     #if b!=bottom:
                     for name,body in self.R.R:
@@ -76,7 +73,7 @@ class LR1(object):
             item(it.name,it.left + [it.rest[0]],it.rest[1:], it.lookahead) for it in I if it.rest and it.rest[0] == X
         )
     def items(self):
-        I0 = self.closure( [item(self.R.R[0][0],[],self.R.R[0][1],eof)] )
+        I0 = self.closure( [item(self.R.R[0][0],[],self.R.R[0][1],EOF)] )
         self.C = [I0]
         changed = True
         while changed:
@@ -122,7 +119,7 @@ class LR1(object):
             for it in Ci:
                 if it.rest == []:
                     if it.name == self.Start:
-                        self.action_table[i][eof] = ('accept',0)
+                        self.action_table[i][EOF] = ('accept',0)
                     else:
                         rule = (it.name,it.left + it.rest)
                         rule_idx = self.R.R.index(rule)
@@ -178,7 +175,7 @@ class LR1(object):
         try:
             ret,token = self.translate(next(g))
         except StopIteration:
-            ret,token = eof,None
+            ret,token = EOF,None
         return ret,token
     def parse(self, inp):
         self.stack = Stack()
@@ -189,9 +186,9 @@ class LR1(object):
         self.values.push( token )
         state = self.stack.peek
         while 1:
-            #print( current, token, self.stack )
-            #print( "stack:",self.stack )
-            #print( "value:",self.values )
+            # print( current, token, self.stack )
+            # print( "stack:",self.stack )
+            # print( "value:",self.values )
             act,In_of_n = self.action_table[state()][current]
             #print( "=>", act,In_of_n )
             if not (token is None) and act == 'shift':
@@ -229,7 +226,7 @@ class LR1(object):
                 raise ParseError("I don't know what's happen, i'm sorry...")
 
 
-__all__ = ["Left","Right",
-           "ident","number","start","eof",
-           "Symbol",
+__all__ = ["Left","Right","Associative",
+           "ident","number","START","EOF",
+           "Symbol","mkSym",
            "LR1","Lexical","grammar"]

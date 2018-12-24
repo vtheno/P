@@ -2,18 +2,16 @@
 from util import Symbol
 from collections import namedtuple
 
-class start(metaclass=Symbol): pass
+class START(metaclass=Symbol): pass
 class ident(metaclass=Symbol): pass
 class number(metaclass=Symbol): pass
-class eof(metaclass=Symbol): pass
+class EOF(metaclass=Symbol): pass
 # class bottom(metaclass=Symbol): pass
 
 item = namedtuple('item',['name','left','rest','lookahead'])
 item.__repr__ = lambda self:f"{self.name} = {' '.join([repr(i) for i in self.left])} @ {' '.join([repr(i) for i in self.rest])} ;; {self.lookahead}"
 
 class grammar(object):
-    __slots__ = ["R","S","Vt","Vn","V",
-                 "first_set","follow_set","nullable_set", ]
     def __init__(self,
                  g: [(Symbol,[Symbol])],
                  vt: [Symbol],
@@ -31,9 +29,9 @@ class grammar(object):
         self.compute_first()
     def init_set(self):
         # self.nullable_set[bottom] = True
-        self.nullable_set[eof] = True
+        self.nullable_set[EOF] = True
         # self.first_set[bottom] = [bottom]
-        self.first_set[eof] = [eof]
+        self.first_set[EOF] = [EOF]
         for x in self.V:
             self.nullable_set[x] = False
             if x in self.Vt:
@@ -41,7 +39,7 @@ class grammar(object):
             else:
                 self.first_set[x] = []
                 self.follow_set[x] = []
-        self.follow_set[self.S] = [eof]
+        self.follow_set[self.S] = [EOF]
     def sum(self, lst):
         ret = [ ]
         for i in lst:
