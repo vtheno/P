@@ -1,12 +1,15 @@
-#coding=utf-8
-class StackError(Exception): pass
+# coding=utf-8
+class StackError(Exception):
+    pass
+
+
 class Stack(object):
-    def __init__(self,size=256*256*256):
+    def __init__(self, size=256 * 256 * 256):
         self.size = size
         self.items = [None] * size
         self.top = 0
 
-    def push(self,val):
+    def push(self, val):
         if self.top < self.size:
             self.items[self.top] = val
             self.top += 1
@@ -23,16 +26,19 @@ class Stack(object):
         else:
             raise StackError(f"pop Empty")
 
-    def peek (self):
+    def peek(self):
         return self.items[self.top - 1]
 
     def __repr__(self):
         return f"{[i for i in self.items if i!=None]}"
 
-def call(*args,**kws):
+
+def call(*args, **kws):
     def warp(fn):
-        return fn(*args,**kws)
+        return fn(*args, **kws)
+
     return warp
+
 
 def define(obj):
     """
@@ -40,28 +46,40 @@ def define(obj):
     obj_warp => rewrite def <name> or class <name> delcare to <name> = warp
     warp => rewrite to obj(*args,**kws)
     """
+
     def obj_warp(fn):
-        def warp(*args,**kws):
-            return obj(*args,**kws)
+        def warp(*args, **kws):
+            return obj(*args, **kws)
+
         return warp
+
     return obj_warp
 
+
 class Symbol(type):
-    def __new__(cls,name,bases,attrs,**kws):
+    def __new__(cls, name, bases, attrs, **kws):
         attrs["__name__"] = name
         attrs["__repr__"] = lambda self: f"{self.__name__}"
-        return type.__new__(cls,name,bases,attrs)()
+        return type.__new__(cls, name, bases, attrs)()
+
+
 def mkSym(name):
-    return Symbol.__new__(Symbol,name,(),{})
+    return Symbol.__new__(Symbol, name, (), {})
+
+
 class ASTStack(object):
     def __init__(self):
-        self.ctx = [ ]
-    def push(self,val):
+        self.ctx = []
+
+    def push(self, val):
         self.ctx += [val]
-    def pop(self,n=1):
+
+    def pop(self, n=1):
         out = list(reversed([self.ctx.pop() for _ in range(n)]))
         return out
+
     def __repr__(self):
         return f"{self.ctx}"
-__all__ = ["call","define","Symbol","mkSym","Stack","ASTStack"]
 
+
+__all__ = ["call", "define", "Symbol", "mkSym", "Stack", "ASTStack"]
