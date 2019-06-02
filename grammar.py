@@ -1,21 +1,34 @@
-#coding=utf-8
+# coding=utf-8
 from util import Symbol
 from collections import namedtuple
 
-class START(metaclass=Symbol): pass
-class ident(metaclass=Symbol): pass
-class number(metaclass=Symbol): pass
-class EOF(metaclass=Symbol): pass
+
+class START(metaclass=Symbol):
+    pass
+
+
+class ident(metaclass=Symbol):
+    pass
+
+
+class number(metaclass=Symbol):
+    pass
+
+
+class EOF(metaclass=Symbol):
+    pass
+
+
 # class bottom(metaclass=Symbol): pass
 
-item = namedtuple('item',['name','left','rest','lookahead'])
-item.__repr__ = lambda self:f"{self.name} = {' '.join([repr(i) for i in self.left])} @ {' '.join([repr(i) for i in self.rest])} ;; {self.lookahead}"
+item = namedtuple("item", ["name", "left", "rest", "lookahead"])
+item.__repr__ = (
+    lambda self: f"{self.name} = {' '.join([repr(i) for i in self.left])} @ {' '.join([repr(i) for i in self.rest])} ;; {self.lookahead}"
+)
+
 
 class grammar(object):
-    def __init__(self,
-                 g: [(Symbol,[Symbol])],
-                 vt: [Symbol],
-                 vn: [Symbol], ):
+    def __init__(self, g: [(Symbol, [Symbol])], vt: [Symbol], vn: [Symbol]):
         self.R = g
         self.S = self.R[0][0]
         self.Vt = vt
@@ -27,6 +40,7 @@ class grammar(object):
         self.init_set()
         self.compute_nullable()
         self.compute_first()
+
     def init_set(self):
         # self.nullable_set[bottom] = True
         self.nullable_set[EOF] = True
@@ -40,14 +54,16 @@ class grammar(object):
                 self.first_set[x] = []
                 self.follow_set[x] = []
         self.follow_set[self.S] = [EOF]
+
     def sum(self, lst):
-        ret = [ ]
+        ret = []
         for i in lst:
             value = [x for x in i if x not in ret]
             if value:
                 ret += value
         return ret
-    def null_point(self,lst):
+
+    def null_point(self, lst):
         flag = True if self.nullable_set[lst[0]] else False
         for i in lst[1:]:
             if flag:
@@ -55,19 +71,21 @@ class grammar(object):
             else:
                 break
         return flag
+
     def compute_nullable(self):
         changed = True
         while changed:
             changed = False
             for x in self.Vn:
-                for name,body in self.R:
+                for name, body in self.R:
                     if name == x:
                         value = self.null_point(body)
                         if value and value != self.nullable_set[name]:
                             self.nullable_set[name] = value
                             changed = True
-    def first_point(self,lst):
-        i,l = 0,len(lst)
+
+    def first_point(self, lst):
+        i, l = 0, len(lst)
         current = lst[i]
         first_x = self.first_set[current][:]
         changed = True
@@ -80,12 +98,13 @@ class grammar(object):
                 first_x += value
                 changed = True
         return first_x
+
     def compute_first(self):
         changed = True
         while changed:
             changed = False
             for x in self.Vn:
-                value = self.sum([self.first_point(y) for X,y in self.R if X == x])
+                value = self.sum([self.first_point(y) for X, y in self.R if X == x])
                 if value and value != self.first_set[x]:
                     value = [i for i in value if i not in self.first_set[x]]
                     if value:

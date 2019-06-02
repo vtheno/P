@@ -45,7 +45,7 @@ class Lexical(object):
         if temp:
             return temp, inp
 
-    def lex(self, inp):  # todo add position
+    def lex(self, inp):
         self.inp = inp
         self.pos = 0
         while inp:

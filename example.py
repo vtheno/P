@@ -9,7 +9,7 @@ def Main(e):
     """
     START -> E
     """
-    return {"Main": e}
+    return ("Main", e)
 
 
 @p.produce
@@ -17,7 +17,7 @@ def Add(e1, _, e2):
     """
     E -> E + E
     """
-    return {"Add": [e1, e2]}
+    return ("Add", e1, e2)
 
 
 @p.produce
@@ -25,7 +25,7 @@ def Mul(e1, _, e2):
     """
     E -> E * E
     """
-    return {"Mul": [e1, e2]}
+    return ("Mul", e1, e2)
 
 
 @p.produce
@@ -33,7 +33,7 @@ def Sub(e1, _, e2):
     """
     E -> E - E
     """
-    return {"Sub": [e1, e2]}
+    return ("Sub", e1, e2)
 
 
 @p.produce
@@ -41,7 +41,7 @@ def Div(e1, _, e2):
     """
     E -> E / E
     """
-    return {"Div": [e1, e2]}
+    return ("Div", e1, e2)
 
 
 @p.produce
@@ -49,7 +49,7 @@ def Num(it):
     """
     E -> number
     """
-    return {"Num": it}
+    return ("Num", it)
 
 
 p.setLevel("+", 4)
@@ -63,4 +63,9 @@ from pprint import pprint
 
 pprint(lr1.action_table)
 pprint(lr1.goto_table)
-pprint(lr1.parse(input(">> ")))
+while 1:
+    pprint(lr1.parse(input(">> ")))
+
+# s-expression is abstract syntax tree
+# string parsing to s-expression, and sexprcode interpreter,
+# the machine run on sexprcode
