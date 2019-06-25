@@ -75,3 +75,6 @@ class Lexical(object):
 
 
 __all__ = ["Lexical"]
+# todo
+# support string
+# support symbol
