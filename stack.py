@@ -1,4 +1,3 @@
-# coding=utf-8
 class StackError(Exception):
     pass
 
@@ -32,42 +31,7 @@ class Stack(object):
     def __repr__(self):
         return f"{[i for i in self.items if i!=None]}"
 
-
-def call(*args, **kws):
-    def warp(fn):
-        return fn(*args, **kws)
-
-    return warp
-
-
-def define(obj):
-    """
-    define => rewrite to <name> = obj_warp
-    obj_warp => rewrite def <name> or class <name> delcare to <name> = warp
-    warp => rewrite to obj(*args,**kws)
-    """
-
-    def obj_warp(fn):
-        def warp(*args, **kws):
-            return obj(*args, **kws)
-
-        return warp
-
-    return obj_warp
-
-
-class Symbol(type):
-    def __new__(cls, name, bases, attrs, **kws):
-        attrs["__name__"] = name
-        attrs["__repr__"] = lambda self: f"{self.__name__}"
-        return type.__new__(cls, name, bases, attrs)()
-
-
-def mkSym(name):
-    return Symbol.__new__(Symbol, name, (), {})
-
-
-class ASTStack(object):
+class ValStack(object):
     def __init__(self):
         self.ctx = []
 
@@ -80,6 +44,3 @@ class ASTStack(object):
 
     def __repr__(self):
         return f"{self.ctx}"
-
-
-__all__ = ["call", "define", "Symbol", "mkSym", "Stack", "ASTStack"]
