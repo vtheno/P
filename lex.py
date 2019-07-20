@@ -61,10 +61,10 @@ class Self(object):
         and inp tail element all is "[a-z|A-Z|0-9]"
         """
         temp = ""
-        if "a" <= inp[0] <= "z" or "A" <= inp[0] <= "Z":
+        if "a" <= inp[0] <= "z" or "A" <= inp[0] <= "Z" or inp[0] == "_":
 
             while inp and (
-                    "a" <= inp[0] <= "z" or "A" <= inp[0] <= "Z" or "0" <= inp[0] <= "9"
+                    "a" <= inp[0] <= "z" or "A" <= inp[0] <= "Z" or "0" <= inp[0] <= "9" or inp[0] == "_"
             ):
                 temp += inp[0]
                 inp = inp[1:]

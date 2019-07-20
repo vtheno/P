@@ -24,6 +24,7 @@ class Rule(object):
         }
         self.func_maps = []
         self.push_fn = self.func_maps.append
+        self.__class__.__doc__ = ""
 
     def __call__(self, p: prod, op_level: dict={}, op_assoc: dict={}):
         self.push(p)
@@ -31,8 +32,10 @@ class Rule(object):
         self.op_assoc.update(op_assoc)
         def _(fn):
             self.push_fn(fn)
+            self.__class__.__doc__ += fn.__doc__.strip("\n")
             return fn
         return _
+
     def build(self):
         V = all_V(self.R)
         vt = all_vt(V)
