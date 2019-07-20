@@ -1,5 +1,6 @@
 # coding=utf-8
 from collections import namedtuple
+from log import print
 
 Pair = namedtuple("Pair", ["tag", "hd", "tl"])
 
@@ -22,7 +23,7 @@ class tags(object):
 
 class Self(object):
 
-    def num(inp):
+    def digit(inp):
         """
         inp: string
         if inp head element is "[0-9]"
@@ -34,7 +35,24 @@ class Self(object):
                 temp += inp[0]
                 inp = inp[1:]
             if temp:
-                return Token(tags.number, temp), inp
+                # return Token(tags.number, temp), inp
+                return temp, inp
+    def num(inp):
+        match_start = Self.digit(inp)
+        if match_start:
+            left, inp = match_start
+            sym = ""
+            if inp and inp[0] == ".":
+                sym += inp[0]
+                inp = inp[1:]
+                match_end = Self.digit(inp)
+                if match_end:
+                    right, inp = match_end
+                    return Token(tags.number, left + sym + right), inp
+                else:
+                    return Token(tags.number, left), sym + inp
+            else:
+                return Token(tags.number, left), inp
 
     def alpha(inp):
         """
@@ -121,7 +139,7 @@ def lex(string, ops={}, parent=[]):
         if match:
             val, inp = match
             push_ret(val)
-            print("[parent]", repr(val), line_number, column_number)
+            print("[parent] %s %s %s", repr(val), line_number, column_number)
             length = len(val)
             cursor = cursor + length
             column_number = column_number + length
@@ -130,7 +148,7 @@ def lex(string, ops={}, parent=[]):
         if match:
             val, inp = match
             push_ret(val)
-            print("[num]", repr(val), line_number, column_number)
+            print("[num] %s %s %s", repr(val), line_number, column_number)
             length = len(val)
             cursor = cursor + length
             column_number = column_number + length
@@ -139,7 +157,7 @@ def lex(string, ops={}, parent=[]):
         if match:
             val, inp = match
             push_ret(val)
-            print("[alpha]", repr(val), line_number, column_number)
+            print("[alpha] %s %s %s", repr(val), line_number, column_number)
             length = len(val)
             cursor = cursor + length
             column_number = column_number + length
@@ -148,7 +166,7 @@ def lex(string, ops={}, parent=[]):
         if match:
             val, inp = match
             push_ret(val)
-            print("[ops]", repr(val), line_number, column_number)
+            print("[ops] %s %s %s", repr(val), line_number, column_number)
             length = len(val)
             cursor = cursor + length
             column_number = column_number + length
@@ -157,7 +175,7 @@ def lex(string, ops={}, parent=[]):
         if match:
             val, inp = match
             push_ret(val)
-            print("[tok]", repr(val), line_number, column_number)
+            print("[tok] %s %s %s", repr(val), line_number, column_number)
             if val.val == '\n':
                 line_number = line_number + 1
                 column_number = 0
@@ -165,19 +183,27 @@ def lex(string, ops={}, parent=[]):
             cursor = cursor + length
             column_number = column_number + length
             continue
-    print( "[break]", repr(inp), cursor )
+    print( "[break]  %s %s", repr(inp), cursor )
     if not inp:
         return ret
     else:
         raise Exception("Lexical")
 
-def skips(inp: [Token], words: [str]) -> [Token]:
+def skip_vals(inp: [Token], words: [str]) -> [Token]:
     return [i for i in inp if i.val not in words]
-
+def skip_tags(inp: [Token], tags: [str]) -> [Token]:
+    return [i for i in inp if i.tag not in tags]
 def map_tag(inp: [Token], mapping: dict) -> [Token]:
     temp= list(inp)
     for cur in temp:
         cur.tag = mapping.get(cur.val, cur.tag)
     return temp
 
-__all__ = ["Pair", "Token", "tags", "Self", "lex", "skips", "map_tag"]
+__all__ = [
+    "Pair",
+    "Token",
+    "tags",
+    "Self",
+    "lex",
+    "skip_vals", "skip_tags", "map_tag"
+]

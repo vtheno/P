@@ -11,6 +11,9 @@ inp = """
 </div>
 => == ===
 -- this is an skips
+1.2333
+1.2
+1.
 """
 
 
@@ -33,8 +36,8 @@ def Compile(template: str):
         elif s.tag == "comment":
             continue
         else:
-            ret.append(s.val)
-    return "".join(ret)
+            ret.append(s)
+    return ret
 
 output = Compile(inp)
 print( "[output]", output )

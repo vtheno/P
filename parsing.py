@@ -1,5 +1,6 @@
 from collections import namedtuple
 from stack import Stack, ValStack
+from log import print
 
 sym = namedtuple("sym", ['name', 'typ', 'tag'], defaults=(None, None, None))
 # sym.__repr__ = lambda self: repr(self.name) # debug
@@ -14,7 +15,7 @@ item.__repr__ = (
     lambda self: f"{self.name} = {' '.join([repr(i) for i in self.left])} @ {' '.join([repr(i) for i in self.rest])} ;; {self.lookahead}"
 )
 
-def all_sets(prods):
+def all_V(prods):
     lefts  = [prod.left for prod in prods]
     rights = [r for prod in prods for r in  prod.right]
     return list(set(lefts + rights))
@@ -46,8 +47,8 @@ class Grammar(object):
         self.init_set()
         self.compute_nullable()
         self.compute_first()
-        print("[nullable_set]", self.nullable_set)
-        print("[first_set]", self.first_set)
+        print("[nullable_set] %s", self.nullable_set)
+        print("[first_set] %s", self.first_set)
 
     def init_set(self):
         self.nullable_set[eof] = True
@@ -60,7 +61,7 @@ class Grammar(object):
                 self.first_set[x] = []
 
     def sum(self, lst):
-        print("[sum]", lst)
+        print("[sum] %s", lst)
         ret = []
         for i in lst:
             value = [x for x in i if x not in ret]
@@ -109,7 +110,7 @@ class Grammar(object):
         while changed:
             changed = False
             for x in self.vn:
-                print("[x]", x)
+                print("[x] %s", x)
                 value = self.sum([self.first_point(y) for X, y in self.R if X == x])
                 if value and value != self.first_set[x]:
                     value = [i for i in value if i not in self.first_set[x]]
@@ -128,9 +129,8 @@ class LR1(object):
     def __init__(self,
                  grammar,
                  op_level,
-                 assocs,
+                 op_assoc,
                  func_maps,
-                 mapping
     ):
         self.G = grammar
         self.V = self.G.V
@@ -138,9 +138,8 @@ class LR1(object):
         self.Vn = self.G.vn
         self.Start = self.G.S
         self.op_level = op_level
-        self.assocs = assocs
+        self.op_assoc = op_assoc
         self.func_maps = func_maps
-        self.mapping = mapping
 
         self.C = []
         self.action_table = []
@@ -206,10 +205,10 @@ class LR1(object):
                         self.C.append(In)
                         changed = True
     def compare(self, alpha, beta):
-        print("[compare 1]", alpha, beta)
+        print("[compare 1] %s %s", alpha, beta)
         a = self.op_level.get(alpha, None)
         b = self.op_level.get(beta, None)
-        print("[compare 2]", a, b)
+        print("[compare 2] %s %s", a, b)
         if a == None or b == None:
             return None
         _id = self.op_level[alnum]
@@ -261,8 +260,8 @@ class LR1(object):
                                 # print( i, "|",it,"|", lookahead,cmp_flag,X,before,reduce )
                                 if cmp_flag == EQ:
                                     # default associative is LEFT
-                                    X_assoc = self.assocs.get(X, LEFT)
-                                    lookahead_assoc = self.assocs.get(lookahead, LEFT)
+                                    X_assoc = self.op_assoc.get(X, LEFT)
+                                    lookahead_assoc = self.op_assoc.get(lookahead, LEFT)
                                     if X_assoc != lookahead_assoc:
                                         raise AssociativeError(
                                             "left- and right-associative operators of equal op_level"
@@ -298,6 +297,15 @@ class LR1(object):
                     j = self.C.index(Cj)
                     self.goto_table[i][A] = ("shift", j)
 
+    def mapping(self, token: Token, V: [sym]) -> (item, Token):
+        env = {s.name:s for s in V if not s.tag}
+        tag = {s.tag:s for s in V if s.tag}
+        print("[env] %s %s %s", env, tag, token)
+        ret = env.get(token.val, None) # op, keywords
+        if not ret: # if token.val is non-terminal
+            ret = tag.get(token.tag, None)
+        return ret, token.val
+
     def next(self, g: iter):
         try:
             ret, token = self.mapping(next(g), self.V)
@@ -311,7 +319,7 @@ class LR1(object):
         self.stack.push(0)
         g = iter(inp)
         current, token = self.next(g)
-        print( "[current]", current, token )
+        print( "[current] %s %s", current, token )
         self.values.push(token)
         state = self.stack.peek
         while 1:
@@ -356,8 +364,12 @@ class LR1(object):
 
 
 __all__ = [
-    "sym", "non_terminal", "terminal",
-    "prod", "all_sets", "all_vt", "all_vn",
-    "item", "eof", "alnum", "number", "Grammar",
-    "GE", "LE", "EQ", "LEFT", "RIGHT", "LR1"
+    "sym", "prod",
+    "non_terminal", "terminal",
+    "all_V", "all_vt", "all_vn",
+    "item",
+    "eof", "alnum", "number",
+    "Grammar", "LR1",
+    "GE", "LE", "EQ",
+    "LEFT", "RIGHT"
 ]
