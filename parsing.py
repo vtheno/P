@@ -300,7 +300,7 @@ class LR1(object):
     def mapping(self, token: Token, V: [sym]) -> (item, Token):
         env = {s.name:s for s in V if not s.tag}
         tag = {s.tag:s for s in V if s.tag}
-        print("[env] %s %s %s", env, tag, token)
+        # print("[env] %s %s %s", env, tag, token)
         ret = env.get(token.val, None) # op, keywords
         if not ret: # if token.val is non-terminal
             ret = tag.get(token.tag, None)
@@ -329,7 +329,7 @@ class LR1(object):
             try:
                 act, In_of_n = self.action_table[state()][current]
             except KeyError:
-                raise Exception(f"Ran into a ``{token}`` where it wasn't expected")
+                raise Exception(f"Ran into a `{token}` where it wasn't expected")
             # print( "=>", act,In_of_n )
             if not (token is None) and act == "shift":
                 self.values.push(token)
@@ -337,6 +337,7 @@ class LR1(object):
                 self.stack.push(token)
                 self.stack.push(In_of_n)
                 current, token = self.next(g)
+
             elif act == "reduce":
                 name, body = self.G.R[In_of_n]
                 drops = [self.stack.pop() for _ in body * 2]
@@ -347,11 +348,12 @@ class LR1(object):
                 # value ast
 
                 func = self.func_maps[In_of_n]
-                count = func.__code__.co_argcount
+                # print( "[body] %s", body )
+                # count = func.__code__.co_argcount
+                count = len(body)
                 args = self.values.pop(count)
 
                 self.values.push(func(*args))
-
 
             elif act == "accept":
                 name, body = self.G.R[0]
@@ -360,7 +362,7 @@ class LR1(object):
                 args = self.values.pop()
                 return func(*args)
             else:
-                raise Exception(f"Ran into a ``{token}`` where it wasn't expected")
+                raise Exception(f"Ran into a `{token}` where it wasn't expected")
 
 
 __all__ = [

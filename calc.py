@@ -83,13 +83,20 @@ def lexical(inp: str):
     lex_inp = map_tag(lex_inp, op_tags)
     return lex_inp
 
-while 1:
-    inp = input("=> ")
-    if inp != ":q":
-        inp = lexical(inp)
-        out = lr1.parse(inp)
-        print( inp )
-        print( out )
-    else:
-        print("Goodbye!")
-        break
+def repl():
+    while 1:
+        inp = input("=> ")
+        if inp != ":q":
+            try:
+                inp = lexical(inp)
+                out = lr1.parse(inp)
+                print( inp )
+                print( out )
+            except Exception as e:
+                print( "[ERROR]", e )
+        else:
+            print("Goodbye!")
+            break
+
+if __name__ == "__main__":
+    repl()
