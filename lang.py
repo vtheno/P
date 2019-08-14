@@ -1,14 +1,14 @@
 #!python
-from parser.warp import Rule
-from parser.warp import prod, sym
-from parser.warp import LEFT, RIGHT
-from parser.warp import non_terminal, terminal
-from parser.warp import alnum, number
+from ext_parser.warp import Rule
+from ext_parser.warp import prod, sym
+from ext_parser.warp import LEFT, RIGHT
+from ext_parser.warp import non_terminal, terminal
+from ext_parser.warp import alnum, number
 
-from parser.lex import skip_vals, map_tag
-from parser.lex import lex
+from ext_parser.lex import skip_vals, map_tag
+from ext_parser.lex import lex
 
-from parser.log import log, INFO
+from ext_parser.log import log, INFO
 log.setLevel(INFO)
 
 r = Rule()
@@ -140,8 +140,16 @@ def e_seq_item_2(e, _1, seq_item):
 # E_SEQ -> E, E_SEQ_ITEM
 # E_SEQ_ITEM -> E
 # E_SEQ_ITEM -> E, E_SEQ_ITEM
+
+def lexical(inp: str):
+    lex_inp = skip_vals(lex(inp), [" ", "\n", "\t", "\r"])
+    lex_inp = map_tag(lex_inp, op_tags)
+    return lex_inp
+
 from pickle import dumps, loads
-if False: # change BNF, modify False to True, else use cache
+import sys
+argv = sys.argv[1:]
+if argv and argv[0] == "rebuild":
     from time import process_time as clock
     _clock = clock()
     lr1 = r.build()
@@ -152,11 +160,6 @@ else:
     with open("cache", "rb") as file:
         data = file.read()
     lr1 = loads(data)
-
-def lexical(inp: str):
-    lex_inp = skip_vals(lex(inp), [" ", "\n", "\t", "\r"])
-    lex_inp = map_tag(lex_inp, op_tags)
-    return lex_inp
 
 def repl():
     while 1:
@@ -174,6 +177,5 @@ def repl():
                 print( out )
             except Exception as e:
                 print( "[ERROR]", e )
-
 if __name__ == "__main__":
     repl()

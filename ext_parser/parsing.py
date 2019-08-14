@@ -1,8 +1,8 @@
 from collections import namedtuple
-from parser.stack import Stack, ValStack
+from ext_parser.stack import Stack, ValStack
 _print = print
-from parser.log import print
-from parser.lex import tags, Token
+from ext_parser.log import print
+from ext_parser.lex import tags, Token
 
 sym = namedtuple("sym", ['name', 'typ', 'tag'], defaults=(None, None, None))
 # sym.__repr__ = lambda self: repr(self.name) # debug

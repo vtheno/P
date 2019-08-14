@@ -1,14 +1,14 @@
 #!python
-from parser.warp import Rule
-from parser.warp import prod, sym
-from parser.warp import LEFT, RIGHT
-from parser.warp import non_terminal, terminal
-from parser.warp import alnum, number
+from ext_parser.warp import Rule
+from ext_parser.warp import prod, sym
+from ext_parser.warp import LEFT, RIGHT
+from ext_parser.warp import non_terminal, terminal
+from ext_parser.warp import alnum, number
 
-from parser.lex import skip_vals, map_tag
-from parser.lex import lex
+from ext_parser.lex import skip_vals, map_tag
+from ext_parser.lex import lex
 
-from parser.log import log, INFO
+from ext_parser.log import log, INFO
 log.setLevel(INFO)
 
 r = Rule()

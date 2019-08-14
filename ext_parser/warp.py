@@ -1,9 +1,9 @@
-from parser.parsing import prod, sym
-from parser.parsing import eof, number, alnum
-from parser.parsing import terminal, non_terminal
-from parser.parsing import all_V, all_vt, all_vn
-from parser.parsing import LR1, Grammar
-from parser.parsing import LEFT, RIGHT
+from ext_parser.parsing import prod, sym
+from ext_parser.parsing import eof, number, alnum
+from ext_parser.parsing import terminal, non_terminal
+from ext_parser.parsing import all_V, all_vt, all_vn
+from ext_parser.parsing import LR1, Grammar
+from ext_parser.parsing import LEFT, RIGHT
 
 __all__ = [
     "LEFT", "RIGHT",

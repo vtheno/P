@@ -1,6 +1,6 @@
 # coding=utf-8
 from collections import namedtuple
-from parser.log import print
+from ext_parser.log import print
 
 Pair = namedtuple("Pair", ["tag", "hd", "tl"])
 
