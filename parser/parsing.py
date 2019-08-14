@@ -1,7 +1,8 @@
 from collections import namedtuple
-from stack import Stack, ValStack
+from parser.stack import Stack, ValStack
 _print = print
-from log import print
+from parser.log import print
+from parser.lex import tags, Token
 
 sym = namedtuple("sym", ['name', 'typ', 'tag'], defaults=(None, None, None))
 # sym.__repr__ = lambda self: repr(self.name) # debug
@@ -26,8 +27,6 @@ def all_vt(sets):
 
 def all_vn(sets):
     return list(i for i in sets if i.typ == non_terminal)
-
-from lex import tags, Token
 
 eof = sym("\0", terminal)
 alnum = sym("alnum", terminal, tags.alnum)
@@ -125,8 +124,6 @@ EQ = 2
 
 LEFT = 0
 RIGHT = 1
-
-from threading import Thread
 
 class LR1(object):
     def __init__(self,

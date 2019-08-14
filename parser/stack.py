@@ -1,7 +1,6 @@
 class StackError(Exception):
     pass
 
-
 class Stack(object):
     def __init__(self, size=256 * 256 * 256):
         self.size = size
