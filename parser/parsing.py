@@ -293,9 +293,7 @@ class LR1(object):
                                     # 无优先级声明则默认为高优先级
                                     self.action_table[i][lookahead] = before
                             else:
-                                raise ConflictError(
-                                    f" => NoSupport resloving Reduce-Reduce !!"
-                                )
+                                raise Exception("Conflict " + f" => NoSupport resloving Reduce-Reduce !!")
                         else:
                             self.action_table[i][it.lookahead] = reduce
             for A in self.Vn:

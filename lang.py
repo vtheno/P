@@ -24,12 +24,6 @@ _then = sym('then', terminal, "key_then")
 _else = sym("else", terminal, "key_else")
 _lp = sym("(", terminal, "op_lp")
 _rp = sym(")", terminal, "op_rp")
-_def = sym("def", terminal, "key_def")
-_ref = sym("ref", terminal, "key_ref")
-_copy = sym("copy", terminal, "key_copy")
-_divert = sym("divert", terminal, "key_divert")
-_from = sym("from", terminal, "key_from")
-_to = sym("to", terminal, "key_to")
 E_SEQ = sym("E_SEQ", non_terminal)
 _comma = sym(",", terminal, "sep_comma")
 E_SEQ_ITEM = sym("E_SEQ_ITEM", non_terminal)
@@ -43,12 +37,6 @@ op_tags = {
     "else": "key_else",
     "(": "op_lp",
     ")": "op_rp",
-    "def": "key_def",
-    "ref": "key_ref",
-    "copy": "key_copy",
-    "divert": "key_divert",
-    "from": "key_from",
-    "to": "key_to",
     "fn": "key_fn",
     ",": "sep_comma",
 }
@@ -122,67 +110,10 @@ def parent(_1, e, _2):
     """
     return {"parent": [e]}
 
-
-@r(prod(E, [_def, E, _from, E]))
-def _def_from(_1, e1, _2, e2):
+@r(prod(E, [_lp, E_SEQ, _rp]))
+def eseq(_1, seq, _2):
     """
-    E -> def E from E
-    """
-    return {"def_from": [e1, e2]}
-
-@r(prod(E, [_ref, E, _from, E]))
-def _ref_from(_1, e1, _2, e2):
-    """
-    E -> ref E from E
-    """
-    return {"ref_from": [e1, e2]}
-
-@r(prod(E, [_copy, E, _from, E]))
-def _copy_from(_1, e1, _2, e2):
-    """
-    E -> copy E from E
-    """
-    return {"copy_from": [e1, e2]}
-
-@r(prod(E, [_divert, E, _from, E]))
-def _divert_from(_1, e1, _2, e2):
-    """
-    E -> divert E from E
-    """
-    return {"divert_from": [e1, e2]}
-
-@r(prod(E, [_def, E, _to, E]))
-def _def_to(_1, e1, _2, e2):
-    """
-    E -> def E from E
-    """
-    return {"def_to": [e1, e2]}
-
-@r(prod(E, [_ref, E, _to, E]))
-def _ref_to(_1, e1, _2, e2):
-    """
-    E -> ref E to E
-    """
-    return {"ref_to": [e1, e2]}
-
-@r(prod(E, [_copy, E, _to, E]))
-def _copy_to(_1, e1, _2, e2):
-    """
-    E -> copy E to E
-    """
-    return {"copy_to": [e1, e2]}
-
-@r(prod(E, [_divert, E, _to, E]))
-def _divert_to(_1, e1, _2, e2):
-    """
-    E -> divert E to E
-    """
-    return {"divert_to": [e1, e2]}
-
-@r(prod(E, [E_SEQ]))
-def eseq(seq):
-    """
-    E -> E_SEQ
+    E -> ( E_SEQ )
     """
     return seq
 
@@ -206,16 +137,21 @@ def e_seq_item_2(e, _1, seq_item):
     """
     return [e] + seq_item
 
-# def, ref, copy, divert e1 from e2 will return e1
-# def, ref, copy, divert e1 to e2 will return e2
 # E_SEQ -> E, E_SEQ_ITEM
 # E_SEQ_ITEM -> E
 # E_SEQ_ITEM -> E, E_SEQ_ITEM
-
-from time import process_time as clock
-_clock = clock()
-lr1 = r.build()
-print( lr1, clock() - _clock )
+from pickle import dumps, loads
+if False: # change BNF, modify False to True, else use cache
+    from time import process_time as clock
+    _clock = clock()
+    lr1 = r.build()
+    print( lr1, clock() - _clock )
+    with open("cache", "wb") as file:
+        file.write(dumps(lr1))
+else:
+    with open("cache", "rb") as file:
+        data = file.read()
+    lr1 = loads(data)
 
 def lexical(inp: str):
     lex_inp = skip_vals(lex(inp), [" ", "\n", "\t", "\r"])
