@@ -1,5 +1,6 @@
 from collections import namedtuple
 from stack import Stack, ValStack
+_print = print
 from log import print
 
 sym = namedtuple("sym", ['name', 'typ', 'tag'], defaults=(None, None, None))
@@ -125,6 +126,8 @@ EQ = 2
 LEFT = 0
 RIGHT = 1
 
+from threading import Thread
+
 class LR1(object):
     def __init__(self,
                  grammar,
@@ -154,8 +157,17 @@ class LR1(object):
         self.items()
         self.table()
 
-    def closure(self, I: [item]) -> [item]:
+    def thread_closure(self, I, X, b, changeds):
+        for name, body in self.G.R:
+            if X == name:
+                value = item(name, [], body, b)
+                if value not in I:
+                    I.append(value)
+                    changeds.append(True)
+                    # changed = True
 
+
+    def closure(self, I: [item]) -> [item]:
         I = list(I)
         changed = True
         while changed:
@@ -164,11 +176,9 @@ class LR1(object):
                 X = it.rest[0] if it.rest else []
                 tail = it.rest[1:]
                 tail = tail if tail else [eof]
-                for b in self.G.first_point(tail + [it.lookahead, eof]):
-                    # for b in self.R.first_point(tail + [it.lookahead]):
-                    # if b!=bottom:
-                    for name, body in self.G.R:
-                        if X == name:
+                for name, body in self.G.R:
+                    if X == name:
+                        for b in self.G.first_point(tail + [it.lookahead, eof]):
                             value = item(name, [], body, b)
                             if value not in I:
                                 I.append(value)
@@ -186,10 +196,10 @@ class LR1(object):
             if i == I and x == X:
                 return self.cache_values[idx]
         else:
-            self.cache_keys.append((I, X))
-            self.cache_length += 1
             value = self.closure(key)
+            self.cache_keys.append((I, X))
             self.cache_values.append(value)
+            self.cache_length += 1
             return value
 
     def items(self):

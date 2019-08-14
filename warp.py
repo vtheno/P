@@ -20,7 +20,7 @@ class Rule(object):
         self.op_level = {
             alnum: 999,
             number: 999,
-            eof: 0,
+            eof: -1,
         }
         self.func_maps = []
         self.push_fn = self.func_maps.append

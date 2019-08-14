@@ -191,8 +191,10 @@ def lex(string, ops={}, parent=[]):
 
 def skip_vals(inp: [Token], words: [str]) -> [Token]:
     return [i for i in inp if i.val not in words]
+
 def skip_tags(inp: [Token], tags: [str]) -> [Token]:
     return [i for i in inp if i.tag not in tags]
+
 def map_tag(inp: [Token], mapping: dict) -> [Token]:
     temp= list(inp)
     for cur in temp:
