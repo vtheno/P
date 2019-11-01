@@ -81,7 +81,7 @@ def parser_lexical(g):
             elif command.value == "lex-keyword":
                 [(_, keyword, _)] = [arg.value for arg in args]    
                 _rlex.register_keyword(replace(keyword))
-            elif command.value == "lex-label":
+            elif command.value == "lex-label-bracket":
                 label, (_, lsym, _), (_, rsym, _) = [arg.value for arg in args]
                 _rlex.register_label_bracket(label, replace(lsym), replace(rsym))
     return _rlex
