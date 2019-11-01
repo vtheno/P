@@ -54,6 +54,7 @@ class _Lexical(object):
                         break
                 # print( f"#### { one in spec.get(token, []) }" )
                 if len(token) == 1:
+                    # print( "lex_spec %r %r", one in spec.get(token, []), token )
                     if one in spec.get(token, []):
                         return chunk(token), xs
                     return None, [token] + xs
@@ -63,30 +64,32 @@ class _Lexical(object):
         return None
     
     def lex_bracket(self, chunk: "(string * string * string) -> token", inp: "string", spec_left: "{string : string list}", spec_right: "{string : string list}") -> "(token option * string) option":
-        # TODO support "\""
         match_left_bracket = self.lex_spec(lambda i: i, inp, spec_left)
         if match_left_bracket:
-            # print(match_left_bracket)
             left, left_tail = match_left_bracket
             token = ""
             if left_tail:
-                # print( (repr(token), left_tail) )
+                # print( (repr(token), left, left_tail) )
                 x, *xs = left_tail
                 while xs:
                     if x not in spec_right.keys():
                         token += x
                         x, *xs = xs
                     else:
-                        flag, _drop = self.lex_spec(lambda i: i, [x] + xs, spec_right)    
+                        flag, flag_tail = self.lex_spec(lambda i: i, [x] + xs, spec_right)
                         if flag:
-                            break
+                            if token[-1] == "\\":
+                                token = token[:-1] + flag
+                                x, *xs = flag_tail
+                            else:
+                                break
                         else:
                             token += x
                             x, *xs = xs
                 # else x in spec_right.keys()
-                match_right_bracket = self.lex_spec(lambda i: i, [x] + xs, spec_right)
-                if match_right_bracket:
-                    right, right_tail = match_right_bracket
+                match = self.lex_spec(lambda i: i, [x] + xs, spec_right)
+                if match:
+                    right, right_tail = match
                     return chunk((left, token, right)), right_tail
                 return None
             return None
@@ -108,23 +111,11 @@ class _Lexical(object):
     def lex(self, inp, *, ident_spec_head, ident_spec_tail, digit_spec, skip_spec, symbol_spec, keyword_spec, label_bracket_dict):
         c = 0
         old_inp = inp
+
         while inp:
             lineno = old_inp[:c].count('\n')
             last_lineno = old_inp[:c].rfind("\n")
             column = c - last_lineno
-
-            flag = False
-            for label, (spec_left, spec_right) in label_bracket_dict.items():
-                match = self.lex_label_bracket(inp, label=label, spec_left=spec_left, spec_right=spec_right, lineno=lineno, column=column)
-                if match:
-                    # print(match)
-                    token, inp = match
-                    c += len(token.value[0] + token.value[1] + token.value[2])
-                    yield token
-                    flag = True
-                    break
-            if flag:
-                continue
 
             match = self.lex_skip(inp, spec=skip_spec, lineno=lineno, column=column)
             if match:
@@ -132,6 +123,22 @@ class _Lexical(object):
                 token, inp = match
                 c += len(token.value)
                 yield token
+                # print("continue %r", token)
+                continue
+            flag = False
+            for label, (spec_left, spec_right) in label_bracket_dict.items():
+                match = self.lex_label_bracket(inp, label=label, spec_left=spec_left, spec_right=spec_right, lineno=lineno, column=column) # label_bracket always behind on skip
+                # if label == "comment":
+                #     print( "%r %r %r", label, match, inp )
+                if match:
+                    # print( "%r %r %r", label, spec_left, spec_right)
+                    token, inp = match
+                    c += len(token.value[0] + token.value[1] + token.value[2])
+                    yield token
+                    flag = True
+                    break
+            if flag:
+                # print("continue %r", token)
                 continue
 
             match = self.lex_ident(inp, spec_head=ident_spec_head, spec_tail=ident_spec_tail, lineno=lineno, column=column) # ident always behind on label_bracket
@@ -140,6 +147,7 @@ class _Lexical(object):
                 token, inp  = match
                 c += len(token.value)
                 yield token
+                # print("continue %r", token)
                 continue
             
             match = self.lex_digit(inp, spec_head=digit_spec, spec_tail=digit_spec, lineno=lineno, column=column)
@@ -148,6 +156,7 @@ class _Lexical(object):
                 token, inp = match
                 c += len(token.value)
                 yield token
+                # print("continue %r", token)
                 continue
 
             match = self.lex_symbol(inp, spec=symbol_spec, lineno=lineno, column=column)
@@ -156,6 +165,7 @@ class _Lexical(object):
                 token, inp = match
                 c += len(token.value)
                 yield token
+                # print("continue %r", token)
                 continue
 
             match = self.lex_keyword(inp, spec=keyword_spec, lineno=lineno, column=column) # digit and symbol and keyword always lexical behind on ident
@@ -165,6 +175,7 @@ class _Lexical(object):
                 if token:
                     c += len(token.value)    
                     yield token
+                    # print("continue %r", token)
                     continue
 
             raise LexicalError(f"at Line {lineno}, Column {column}")
@@ -263,7 +274,9 @@ class Lexical(object):
         else:
             raise ValueError(f"register_label_bracket({label}) exists")
 
-    def lex(self, inp, filters=[]):
+    def lex(self, inp: "string", filters=[]):
+        if inp and inp[-1] != "\n":
+            inp += "\n"
         g = self._lex(
             inp, skip_spec=self.skip_spec, symbol_spec=self.symbol_spec, keyword_spec=self.keyword_spec, 
             ident_spec_head=self.ident_spec_head, 
