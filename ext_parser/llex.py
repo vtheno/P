@@ -95,20 +95,26 @@ class _Lexical(object):
             return None
         return None
 
-    def lex_ident(self, inp, *, spec_head, spec_tail, lineno, column):
-        return self.lex_seq(lambda token: Token("ident", token, lineno, column), inp, spec_head, spec_tail)
+    def lex_ident(self, inp, *, keyword_list, spec_head, spec_tail, lineno, column):
+        def _chunk_keyword(token):
+            if token in keyword_list:
+                return Token("keyword", token, lineno, column)
+            return Token("ident", token, lineno, column)
+        return self.lex_seq(_chunk_keyword, inp, spec_head, spec_tail)
+
     def lex_digit(self, inp, *, spec_head, spec_tail, lineno, column):
         return self.lex_seq(lambda token: Token("digit", token, lineno, column), inp, spec_head, spec_tail, ".")
+
     def lex_skip(self, inp, *, spec, lineno, column):
         return self.lex_spec(lambda token: Token("skip", token, lineno, column), inp, spec)
+
     def lex_symbol(self, inp, *, spec, lineno, column):
         return self.lex_spec(lambda token: Token("symbol", token, lineno, column), inp, spec)
-    def lex_keyword(self, inp, *, spec, lineno, column):
-        return self.lex_spec(lambda token: Token("keyword", token, lineno, column), inp, spec)
+
     def lex_label_bracket(self, inp, *, label, spec_left, spec_right, lineno, column):
         return self.lex_bracket(lambda token: Token(label, token, lineno, column), inp, spec_left, spec_right)
 
-    def lex(self, inp, *, ident_spec_head, ident_spec_tail, digit_spec, skip_spec, symbol_spec, keyword_spec, label_bracket_dict):
+    def lex(self, inp, *, ident_spec_head, ident_spec_tail, digit_spec, skip_spec, symbol_spec, keyword_list, label_bracket_dict):
         c = 0
         old_inp = inp
 
@@ -141,8 +147,8 @@ class _Lexical(object):
                 # print("continue %r", token)
                 continue
 
-            match = self.lex_ident(inp, spec_head=ident_spec_head, spec_tail=ident_spec_tail, lineno=lineno, column=column) # ident always behind on label_bracket
-            if match:
+            match = self.lex_ident(inp, keyword_list=keyword_list, spec_head=ident_spec_head, spec_tail=ident_spec_tail, lineno=lineno, column=column) # ident always behind on label_bracket
+            if match: # keyword and ident lexical on lex_ident
                 # print(match)
                 token, inp  = match
                 c += len(token.value)
@@ -159,7 +165,7 @@ class _Lexical(object):
                 # print("continue %r", token)
                 continue
 
-            match = self.lex_symbol(inp, spec=symbol_spec, lineno=lineno, column=column)
+            match = self.lex_symbol(inp, spec=symbol_spec, lineno=lineno, column=column)  # digit and symbol always lexical behind on ident
             if match:
                 # print(match)    
                 token, inp = match
@@ -168,27 +174,19 @@ class _Lexical(object):
                 # print("continue %r", token)
                 continue
 
-            match = self.lex_keyword(inp, spec=keyword_spec, lineno=lineno, column=column) # digit and symbol and keyword always lexical behind on ident
-            if match:
-                # print(match)    
-                token, inp = match
-                if token:
-                    c += len(token.value)    
-                    yield token
-                    # print("continue %r", token)
-                    continue
+            
 
-            raise LexicalError(f"at Line {lineno}, Column {column}")
+            raise LexicalError(f"Unknow {old_inp[c]!r} at Line {lineno}, Column {column}")
 
 class Lexical(object):
     def __init__(self):
         self.ident_spec_head = list(map(chr, range(ord("A"), ord("Z") + 1))) + \
-                            list(map(chr, range(ord("a"), ord("z") + 1))) + ["_", "-"]
+                            list(map(chr, range(ord("a"), ord("z") + 1))) + ["_", "-", "*"]
         self.ident_spec_tail = self.ident_spec_head + [str(x) for x in range(10)]
         self.digit_spec =  [str(x) for x in range(10)]
         self.skip_spec = {}
         self.symbol_spec = {}
-        self.keyword_spec = {}
+        self.keyword_list = []
         self.label_bracket_dict = {}
         self._lex = _Lexical().lex
 
@@ -267,7 +265,10 @@ class Lexical(object):
     def register_symbol(self, symbol: "string"):
         self.register_spec(symbol, self.symbol_spec)
     def register_keyword(self, keyword: "string"):
-        self.register_spec(keyword, self.keyword_spec)
+        if keyword not in self.keyword_list:
+            self.keyword_list.append(keyword)
+        else:
+            raise ValueError(f"register_keyword({keyword}) exists")
     def register_label_bracket(self, label: "string", left: "string", right: "string"):
         if label not in self.label_bracket_dict.keys():
             self.label_bracket_dict[label] = (self.construct_spec(left), self.construct_spec(right))
@@ -278,7 +279,7 @@ class Lexical(object):
         if inp and inp[-1] != "\n":
             inp += "\n"
         g = self._lex(
-            inp, skip_spec=self.skip_spec, symbol_spec=self.symbol_spec, keyword_spec=self.keyword_spec, 
+            inp, skip_spec=self.skip_spec, symbol_spec=self.symbol_spec, keyword_list=self.keyword_list, 
             ident_spec_head=self.ident_spec_head, 
             ident_spec_tail=self.ident_spec_tail,
             digit_spec=self.digit_spec,
